@@ -41,6 +41,11 @@ Songs with missing or insufficient lyrical content are removed during preprocess
 
 > The dataset is not necessarily included in this repository. Download it from the [Spotify Lyrics Dataset page on Kaggle](https://www.kaggle.com/datasets/evabot/spotify-lyrics-dataset) and review its license and usage terms before using or redistributing it.
 
+## Project Files
+
+- [View the Analysis Notebook](https://colab.research.google.com/drive/1maxIHJwWVfwWQPamCIL_hsDvUWZqHYvP)
+- [Download the original dataset from Kaggle](https://www.kaggle.com/datasets/evabot/spotify-lyrics-dataset)
+
 ## Methodology
 
 ### 1. Data Loading and Preprocessing
