@@ -1,6 +1,8 @@
-# Spotify Song & Lyrics Analysis
+# Spotify Song & Lyrics Analysis Pipeline
 
-This project explores a dataset of Spotify songs and lyrics using natural language processing (NLP) techniques. It applies sentiment and emotion analysis to examine the emotional characteristics of music across different genres and artists.
+This project explores a dataset of Spotify songs and lyrics using natural language processing techniques as a Rhode Island College Natural Language Processing Capstone Project. 
+
+It applies sentiment and emotion analysis to examine the emotional characteristics of music across different genres and artists.
 
 The project also includes a playlist generator that recommends songs based on a selected emotion, genre, or combination of both.
 
