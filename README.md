@@ -1,6 +1,6 @@
 # Spotify Song & Lyrics Analysis
 
-This project explores a dataset of Spotify songs and lyrics using natural language processing techniques as a Rhode Island College Natural Language Processing Capstone Project. It investigates whether general-purpose sentiment and emotion models can accurately interpret song lyrics. The project applies VADER sentiment analysis and a pretrained DistilBERT emotion classifier to a Spotify lyrics dataset, evaluates their conclusions through quantitative metrics and individual song analysis, and uses the processed results to generate playlists.
+This project uses NLP to explore a dataset of Spotify song lyrics as a Rhode Island College Natural Language Processing Capstone Project. It investigates whether general-purpose sentiment and emotion models can accurately interpret song lyrics. The project applies VADER sentiment analysis and a pretrained DistilBERT emotion classifier to the lyrics dataset, evaluates their conclusions through quantitative metrics and individual song analysis, and uses the processed results to generate playlists.
 
 The pipeline ran successfully, but qualitative review showed that its outputs were only partially reliable. The models performed better on direct negative language than on lyrics containing sarcasm, irony, figurative language, mixed emotions, or context-dependent meaning. This project therefore serves both as an NLP implementation and as a case study in the limitations of applying pretrained models outside their original domains.
 
