@@ -18,9 +18,10 @@ The project was designed to:
 
 ## Project Files
 
+
 - [Analysis Notebook](https://colab.research.google.com/drive/1maxIHJwWVfwWQPamCIL_hsDvUWZqHYvP) — data preparation, model inference, evaluation, visualization, and playlist generation
-- `reports/Analyzing_Sentiment_and_Emotion_in_Song_Lyrics.pdf` — written analysis of the methodology, results, and model limitations
-- [`Spotify Lyrics Dataset`](https://www.kaggle.com/datasets/evabot/spotify-lyrics-dataset) — original dataset published on Kaggle
+- [Project Report](./reports/Analyzing_Sentiment_and_Emotion_in_Song_Lyrics.pdf) — written analysis of the methodology, results, and model limitations
+- [Spotify Lyrics Dataset](https://www.kaggle.com/datasets/evabot/spotify-lyrics-dataset) — original dataset published on Kaggle
 
 ## Dataset
 
