@@ -1,294 +1,266 @@
-# Spotify Song & Lyrics Analysis Pipeline
+# Spotify Song & Lyrics Analysis
 
-This project explores a dataset of Spotify songs and lyrics using natural language processing techniques as a Rhode Island College Natural Language Processing Capstone Project. 
+This project explores a dataset of Spotify songs and lyrics using natural language processing techniques as a Rhode Island College Natural Language Processing Capstone Project. It investigates whether general-purpose sentiment and emotion models can accurately interpret song lyrics. The project applies VADER sentiment analysis and a pretrained DistilBERT emotion classifier to a Spotify lyrics dataset, evaluates their conclusions through quantitative metrics and individual song analysis, and uses the processed results to generate playlists.
 
-It applies sentiment and emotion analysis to examine the emotional characteristics of music across different genres and artists.
+The pipeline ran successfully, but qualitative review showed that its outputs were only partially reliable. The models performed better on direct negative language than on lyrics containing sarcasm, irony, figurative language, mixed emotions, or context-dependent meaning. This project therefore serves both as an NLP implementation and as a case study in the limitations of applying pretrained models outside their original domains.
 
-The project also includes a playlist generator that recommends songs based on a selected emotion, genre, or combination of both.
+## Project Objectives
 
-## Project Overview
+The project was designed to:
 
-The repository contains a Google Colab notebook covering the complete analysis workflow, including:
-
-* Loading and cleaning the dataset
-* Preprocessing and filtering lyrics
-* Sentiment analysis with NLTK VADER
-* Sentiment classification with TF-IDF and Logistic Regression
-* Emotion classification with a pretrained DistilBERT model
-* Genre- and artist-level analysis
-* Data visualization with Matplotlib and Seaborn
-* Emotion- and genre-based playlist generation
-* Playlist export to CSV
-
-## Dataset
-
-This project uses a subset of the **Spotify Lyrics Dataset**, published by Kaggle user **Eva Botoș**.
-
-* **Dataset:** [Spotify Lyrics Dataset](https://www.kaggle.com/datasets/evabot/spotify-lyrics-dataset)
-* **Platform:** Kaggle
-* **Local project file:** `lyrics_10k.csv`
-* **Project sample size:** Approximately 10,000 songs
-
-The dataset contains Spotify songs and associated information such as:
-
-* Song title
-* Song ID
-* Artist
-* Artist ID
-* Genre
-* Explicit-content indicator
-* Lyrics
-
-Songs with missing or insufficient lyrical content are removed during preprocessing.
-
-> The dataset is not necessarily included in this repository. Download it from the [Spotify Lyrics Dataset page on Kaggle](https://www.kaggle.com/datasets/evabot/spotify-lyrics-dataset) and review its license and usage terms before using or redistributing it.
+1. Obtain a dataset representative of popular music.
+2. Clean and standardize the dataset for NLP processing.
+3. Classify lyrical sentiment with VADER.
+4. Classify lyrical emotion with a pretrained DistilBERT model.
+5. Analyze trends across the full dataset, genres, and artists.
+6. Generate playlists using the predicted genre and emotion labels.
+7. Evaluate model performance through metrics and close readings of selected songs.
 
 ## Project Files
 
-- [View the Analysis Notebook](https://colab.research.google.com/drive/1maxIHJwWVfwWQPamCIL_hsDvUWZqHYvP)
-- [Download the original dataset from Kaggle](https://www.kaggle.com/datasets/evabot/spotify-lyrics-dataset)
+- [Analysis Notebook](https://colab.research.google.com/drive/1maxIHJwWVfwWQPamCIL_hsDvUWZqHYvP) — data preparation, model inference, evaluation, visualization, and playlist generation
+- `reports/Analyzing_Sentiment_and_Emotion_in_Song_Lyrics.pdf` — written analysis of the methodology, results, and model limitations
+- [`Spotify Lyrics Dataset`](https://www.kaggle.com/datasets/evabot/spotify-lyrics-dataset) — original dataset published on Kaggle
+
+## Dataset
+
+This project uses the [Spotify Lyrics Dataset](https://www.kaggle.com/datasets/evabot/spotify-lyrics-dataset), published by Eva Bot on Kaggle in 2023. It contains songs from more than 300 artists across decades of popular music.
+
+Available fields include:
+
+- Song title
+- Spotify song ID
+- Artist name
+- Spotify artist ID
+- Genre
+- Explicit-content indicator
+- Lyrics
+
+The project uses a processed subset saved locally as `lyrics_10k.csv`. The dataset is not included in this repository. Download it from Kaggle and review its license and usage terms before using or redistributing it.
+
+## Data Preparation
+
+The dataset was prepared for analysis by:
+
+- Removing entries with missing values
+- Reducing multi-artist entries to the first listed artist
+- Reducing multi-genre entries to the first listed genre
+- Removing genres represented by fewer than 40 songs
+- Consolidating 54 remaining genre labels into 13 umbrella genres
+- Removing lyrics containing fewer than 20 tokens
+- Truncating lyrics to DistilBERT's 512-token input limit for emotion analysis
+
+These decisions made the dataset easier to analyze, but they also introduced limitations. Selecting only the first artist or genre discarded some information, while truncation prevented the emotion model from examining complete lyrics for longer songs.
 
 ## Methodology
 
-### 1. Data Loading and Preprocessing
+### Sentiment Analysis with VADER
 
-The dataset is loaded into a Pandas DataFrame and prepared for analysis by:
+[VADER](https://ojs.aaai.org/index.php/ICWSM/article/view/14550) (Valence Aware Dictionary and sEntiment Reasoner) is a rule-based sentiment model created for informal social-media text. It was selected because popular lyrics often contain informal language, repetition, and strong emotional expression.
 
-* Removing unnecessary columns
-* Handling missing values
-* Standardizing artist and genre entries
-* Removing malformed artist values
-* Calculating lyric token counts
-* Filtering songs with limited lyrical content
-* Truncating lyrics when required by the transformer model
+VADER assigned each song a compound sentiment score between `-1` and `1`. These scores were then grouped into negative, neutral, and positive classes and into more descriptive intensity categories ranging from extremely negative to extremely positive.
 
-These steps improve data consistency and help ensure that the lyrics contain enough information for meaningful analysis.
+### TF-IDF and Logistic Regression
 
-### 2. Sentiment Analysis with NLTK VADER
+A Logistic Regression classifier was trained to reproduce the sentiment labels generated by VADER:
 
-The project uses NLTK's VADER (**Valence Aware Dictionary and Sentiment Reasoner**) to calculate sentiment scores for each song.
+- 80% training and 20% testing split
+- TF-IDF features using the 5,000 most frequent unigrams
+- English stop-word removal
+- Balanced class weights
+- L2 regularization
+- Regularization strength of `C = 0.1`
 
-VADER produces four scores:
+These metrics measure agreement with VADER-generated labels. They do **not** establish that either system correctly understood the lyrics, because VADER's labels were not human-annotated ground truth.
 
-* Negative
-* Neutral
-* Positive
-* Compound
+### Emotion Analysis with DistilBERT
 
-The compound score represents the overall sentiment of the lyrics. It is converted into a categorical sentiment label such as:
+The project uses Bhadresh Savani's [`distilbert-base-uncased-emotion`](https://huggingface.co/bhadresh-savani/distilbert-base-uncased-emotion) model. It classifies text into six emotions:
 
-* `positive`
-* `neutral`
-* `negative`
+- Joy
+- Anger
+- Sadness
+- Fear
+- Love
+- Surprise
 
-### 3. Sentiment Classification
+The model was trained on Twitter data rather than song lyrics. Its predictions were therefore evaluated as a transfer to a different and more linguistically complex domain.
 
-A supervised machine-learning model is trained to predict the VADER-generated sentiment labels.
+## Quantitative Results
 
-The classification workflow includes:
+### Dataset Sentiment
 
-1. Converting lyrics into numerical features with TF-IDF vectorization
-2. Splitting the data into training and testing sets
-3. Training a Logistic Regression classifier
-4. Evaluating the model with accuracy, precision, recall, F1-score, and a confusion matrix
+VADER produced the following overall results:
 
-The Logistic Regression model achieved approximately **81% accuracy** when predicting sentiment labels.
+- Mean compound score: `0.19`
+- Standard deviation: `0.88`
+- Positive songs: `4,482`
+- Negative songs: `2,989`
+- Neutral songs: `54`
 
-### 4. Emotion Analysis with DistilBERT
+The dataset was classified as overwhelmingly positive, with approximately 25% of entries receiving compound scores above `0.98`. The unusually extreme distribution raised questions about whether VADER was responding appropriately to lyrical context.
 
-For more detailed emotional classification, the project uses the pretrained [`DistilBERT-base-uncased-emotion`](https://huggingface.co/bhadresh-savani/distilbert-base-uncased-emotion) transformer model.
+### Logistic Regression Performance
 
-The model predicts a dominant emotion for each song, including:
+| Class | Precision | Recall | F1-score |
+| --- | ---: | ---: | ---: |
+| Negative | 74% | 74% | 74% |
+| Neutral | 27% | 73% | 39% |
+| Positive | 83% | 81% | 82% |
 
-* Joy
-* Anger
-* Sadness
-* Love
-* Fear
-* Surprise
+Additional results:
 
-Because transformer models have a maximum input length, longer lyrics are truncated before classification.
+- Training accuracy: `82.8%`
+- Test accuracy: `78.6%`
+- Accuracy gap: `4.2 percentage points`
+- Macro average: `65%`
+- Weighted average: `79%`
 
-### 5. Exploratory Data Analysis and Visualization
+Neutral performance was limited by the small number of neutral examples—only 11 appeared in the test set. More importantly, these results show that Logistic Regression could learn VADER's classification patterns; they do not validate VADER's interpretation of the songs.
 
-Matplotlib and Seaborn are used to visualize patterns in the dataset.
+### DistilBERT Emotion Distribution
 
-The notebook includes visualizations for:
+| Emotion | Approximate share |
+| --- | ---: |
+| Joy | 37% |
+| Anger | 25% |
+| Sadness | 25% |
+| Fear | 6% |
+| Love | 5% |
+| Surprise | 1% |
 
-* Overall sentiment distribution
-* Overall emotion distribution
-* Average sentiment by genre
-* Emotion frequency by genre
-* Artists with the highest average sentiment
-* Artists with the lowest average sentiment
-* Genre and emotion relationships
-* Sentiment-classification performance
+The sentiment and emotion outputs did not align cleanly. VADER labeled approximately 60% of songs as positive, while DistilBERT labeled only 37% as joyful. Even after including love and surprise as potentially positive emotions, many songs received combinations such as positive sentiment with anger, sadness, or fear.
 
-Stacked bar charts are also used to compare the relative frequency of emotions across selected genres.
+These pairings were not automatically errors because sentiment and emotion are different concepts. However, their frequency—combined with incorrect individual-song predictions—showed that the models required closer qualitative evaluation.
 
-### 6. Spotify Playlist Generator
+## Genre and Artist Observations
 
-The project includes a Python function that generates a 20-song playlist based on user-selected criteria.
+VADER classified adult standards, country, and blues as the most positive genres, while metal, hip hop, and rap were the most negative. Clean Bandit and DING DONG received the highest average artist sentiment scores, while Tony Yayo and D12 received the lowest.
 
-Playlists can be filtered by:
+DistilBERT's genre-level emotion results included:
 
-* Emotion
-* Genre
-* Both emotion and genre
+- Metal, rap, and hip hop having the highest proportions of anger
+- Country having the highest frequency of fear
+- Folk having the highest frequency of sadness
+- Dance, blues, and punk containing no songs classified as surprise
 
-A second function exports the generated playlist to a CSV file. The exported file can then be used with a compatible playlist-import service to create a Spotify playlist.
+These results are exploratory rather than definitive. Because the underlying labels were not consistently reliable, the genre and artist visualizations should not be interpreted as validated descriptions of those musical categories.
 
-Example:
+## Qualitative Song Evaluation
 
-```python
-playlist = generate_playlist(
-    dataframe=df,
-    emotion="joy",
-    genre="pop",
-    playlist_size=20
-)
-```
+Close reading exposed limitations that the aggregate metrics did not reveal.
 
-Export the playlist:
+### "Lust for Life" — Iggy Pop
 
-```python
-export_playlist(
-    playlist,
-    filename="joy_pop_playlist.csv"
-)
-```
+The models classified the song as **extremely positive** and **joyful**. A closer reading found themes of addiction, disillusionment, and consequences from poor decisions. VADER and DistilBERT appeared to interpret the repeated phrase “lust for life” literally and missed the song's irony and dark humor.
+
+### "Gold Rush" — Taylor Swift
+
+The song was classified as **extremely positive** and **joyful**, although its lyrics express romantic disillusionment, competition, and insecurity. The models did not adequately account for negation or the context surrounding phrases such as “I don't like a gold rush.” The positive associations of the word “gold” may also have influenced the predictions.
+
+### "Corruption" — Iggy Pop
+
+VADER's **very negative** classification matched the song's condemnation of corruption. DistilBERT labeled its emotion as **anger**, although sadness or fear may better represent portions of the lyrics. This example showed stronger sentiment performance but less precise emotion classification.
+
+### "Lavender Haze" — Taylor Swift
+
+The song was labeled **extremely negative** with **fear**. Its discussion of public scrutiny supports a negative reading, but anger or sadness may also fit its defiance and references to melancholia. The extremely negative sentiment score may have been influenced by profanity.
 
 ## Key Findings
 
-* The Logistic Regression model achieved approximately **81% accuracy** when classifying lyrics by sentiment.
-* The model performed especially well when identifying positive lyrics, achieving approximately **91% recall** for the positive class.
-* The emotion model provided more specific emotional categories than VADER's general positive, negative, and neutral labels.
-* Sentiment and emotion distributions varied across genres, demonstrating that different genres can have distinct lyrical profiles.
-* Artist-level analysis revealed differences in average lyrical sentiment, suggesting that some artists maintain recognizable emotional patterns across their songs.
+- VADER and DistilBERT were only partially effective at interpreting song lyrics.
+- Both models struggled with sarcasm, irony, metaphor, negation, narrative context, and mixed emotions.
+- The models performed better when negative meaning was stated directly.
+- VADER's lexicon and rule-based approach often overemphasized individual words or phrases.
+- DistilBERT's bidirectional architecture did not eliminate biases inherited from its Twitter training data.
+- A high classification score against machine-generated labels does not demonstrate agreement with human interpretation.
+- Visualizations can appear persuasive even when their underlying labels are unreliable.
+- Qualitative error analysis was essential for identifying failures hidden by aggregate statistics.
+- Negative experimental results can provide useful evidence about domain mismatch and model limitations.
 
-## How to Use
+## Playlist Generator
 
-### 1. Download the Dataset
+The notebook includes a function that generates a random playlist based on:
 
-Download the source data from the [Spotify Lyrics Dataset on Kaggle](https://www.kaggle.com/datasets/evabot/spotify-lyrics-dataset).
+- Emotion
+- Genre and emotion
 
-A Kaggle account may be required to download the dataset.
+Each exported CSV contains:
 
-Prepare or select the approximately 10,000-song subset used by the notebook and save it as:
+- Playlist order
+- Spotify song ID
+- Song title
+- Artist
+- Genre
+- VADER compound sentiment score
+- DistilBERT emotion
 
-```text
-lyrics_10k.csv
-```
+The generated playlists should be treated as experimental. A song selected for a joyful playlist, for example, may not contain joyful lyrics because of the emotion model's limitations.
 
-### 2. Open the Notebook
+## How to Run the Project
 
-Download the repository and open the `.ipynb` notebook in [Google Colab](https://colab.research.google.com/).
+1. Download the [Spotify Lyrics Dataset from Kaggle](https://www.kaggle.com/datasets/evabot/spotify-lyrics-dataset).
+2. Prepare the required subset as `lyrics_10k.csv`.
+3. Open `443_Capstone_Project.ipynb` in [Google Colab](https://colab.research.google.com/drive/1maxIHJwWVfwWQPamCIL_hsDvUWZqHYvP).
+4. Upload the CSV to the Colab session or update the notebook to use its actual location.
+5. Install the required dependencies.
+6. Run the notebook cells sequentially.
 
-You can also upload the notebook directly to Colab.
-
-### 3. Upload the Dataset
-
-Upload `lyrics_10k.csv` to the Colab environment.
-
-The file can typically be placed at:
-
-```text
-/content/lyrics_10k.csv
-```
-
-If the dataset is stored in Google Drive, mount your Drive and update the notebook's file path accordingly.
-
-### 4. Install the Dependencies
-
-Run the following command in a Colab cell:
-
-```bash
-pip install pandas nltk seaborn scikit-learn transformers matplotlib torch
-```
-
-The Python `re` module is part of the standard library and does not need to be installed separately.
-
-### 5. Run the Notebook
-
-Execute the notebook cells sequentially.
-
-The notebook will:
-
-1. Load and clean the data
-2. Analyze lyrical sentiment
-3. Train and evaluate the sentiment classifier
-4. Predict dominant emotions
-5. Generate visualizations
-6. Create and export custom playlists
-
-### 6. Generate a Playlist
-
-Run the playlist-generator section and provide an emotion, genre, or both.
-
-The resulting playlist can be exported as a CSV file for use outside the notebook.
-
-## Dependencies
-
-The project uses the following Python libraries:
-
-* [Pandas](https://pandas.pydata.org/)
-* [NLTK](https://www.nltk.org/)
-* [scikit-learn](https://scikit-learn.org/)
-* [Hugging Face Transformers](https://huggingface.co/docs/transformers/)
-* [PyTorch](https://pytorch.org/)
-* [Matplotlib](https://matplotlib.org/)
-* [Seaborn](https://seaborn.pydata.org/)
-
-It also uses Python's built-in `re` module for regular-expression-based text cleaning.
 
 ## Technologies Used
 
-* Python
-* Google Colab
-* Pandas
-* NLTK VADER
-* TF-IDF
-* Logistic Regression
-* Hugging Face Transformers
-* DistilBERT
-* Matplotlib
-* Seaborn
+- Python
+- Google Colab
+- Pandas
+- NLTK VADER
+- TF-IDF
+- scikit-learn Logistic Regression
+- Hugging Face Transformers
+- DistilBERT
+- PyTorch
+- Matplotlib
+- Seaborn
 
 ## Limitations
 
-* Song lyrics may contain incomplete, duplicated, or incorrectly formatted entries.
-* VADER was primarily designed for general-purpose text and may not fully capture figurative or poetic language.
-* Transformer input-length limits require longer lyrics to be truncated.
-* The predicted emotion represents the model's interpretation of the lyrics and may not match the listener's experience.
-* Genre labels are not always standardized, and individual songs may belong to multiple genres.
-* The generated playlists are exported as CSV files rather than being added directly to a Spotify account through the Spotify Web API.
+- Neither model was trained specifically on song lyrics.
+- The project did not use human-annotated sentiment and emotion labels as ground truth.
+- DistilBERT analyzed no more than 512 tokens from each song.
+- Assigning one dominant emotion oversimplified songs containing multiple or changing emotions.
+- Reducing entries to one artist and one genre removed information from collaborative or cross-genre songs.
+- The small neutral class made neutral evaluation unstable.
+- Artist-level averages were sometimes based on relatively small samples.
+- Playlist quality depended on model predictions that were not consistently accurate.
 
 ## Future Improvements
 
-Possible future additions include:
+- Build a human-annotated evaluation sample of song lyrics.
+- Fine-tune a transformer model on lyrical data.
+- Compare newer or domain-specific language models.
+- Support multi-label emotion classification.
+- Report confidence scores and representative prediction errors.
+- Evaluate agreement with human judgment separately from agreement with automated labels.
 
-* Integrating the Spotify Web API to create playlists automatically
-* Supporting multi-label emotion classification
-* Comparing additional transformer models
-* Incorporating audio features such as tempo, energy, and valence
-* Building an interactive playlist-generation interface
-* Expanding the analysis to a larger dataset
-* Deploying the playlist generator as a web application
+## Conclusion
 
-## Data Attribution
+The project successfully implemented a complete NLP workflow, but it did not demonstrate that VADER or the selected DistilBERT model could reliably determine the sentiment and emotion of song lyrics. Both systems were developed using shorter, more direct text domains and struggled with the linguistic complexity of music.
 
-The lyrical data used by this project was obtained from:
+The most important result was therefore not a genre ranking or an accuracy score. It was the discovery that technically valid model outputs can still be contextually misleading. Reliable NLP analysis requires appropriate training data, trustworthy evaluation labels, qualitative error analysis, and domain-specific validation.
 
-> Eva Botoș. *Spotify Lyrics Dataset*. Kaggle.
-> https://www.kaggle.com/datasets/evabot/spotify-lyrics-dataset
+## References
 
-This project is not affiliated with or endorsed by Spotify or Kaggle.
+- Bot, E. (2023). [*Spotify Lyrics Dataset*](https://www.kaggle.com/datasets/evabot/spotify-lyrics-dataset). Kaggle.
+- Hutto, C. J., & Gilbert, E. (2014). [*VADER: A parsimonious rule-based model for sentiment analysis of social media text*](https://ojs.aaai.org/index.php/ICWSM/article/view/14550). Proceedings of the International AAAI Conference on Web and Social Media, 8(1), 216–225.
+- Sanh, V., Debut, L., Chaumond, J., & Wolf, T. (2019). [*DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter*](https://arxiv.org/abs/1910.01108). arXiv.
+- Savani, B. (2021). [*Distilbert-base-uncased-emotion*](https://huggingface.co/bhadresh-savani/distilbert-base-uncased-emotion). Hugging Face.
+
+## Acknowledgment
+
+Gemini AI was used during the original project for limited code generation and troubleshooting, including assistance with visualizations, artist sentiment search, playlist output, and reducing overfitting. 
 
 ## License
 
-The source code and analysis in this repository are intended for educational and research purposes.
-
-The dataset remains subject to the license and usage terms provided by its original publisher. Review the [Kaggle dataset page](https://www.kaggle.com/datasets/evabot/spotify-lyrics-dataset) before redistributing the dataset or using it outside this project.
+This repository's code and analysis are intended for educational and research purposes. The Spotify Lyrics Dataset remains subject to the license and usage terms established by its original publisher. This project is not affiliated with or endorsed by Spotify, Kaggle, or Hugging Face.
 
 ## Author
 Daniel DiBiasio
